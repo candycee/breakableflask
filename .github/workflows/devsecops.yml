@@ -12,7 +12,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
-          python-version: "3.10"
+          python-version: '3.10'
 
       - name: Install requirements
         run: pip install -r requirements.txt
@@ -29,11 +29,14 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v3
 
-      - name: Install hadolint
+      - name: Install Trivy
         run: |
-          sudo wget -O /usr/local/bin/hadolint https://github.com/hadolint/hadolint/releases/download/v2.12.0/hadolint-Linux-x86_64
-          sudo chmod +x /usr/local/bin/hadolint
+          sudo apt-get update
+          sudo apt-get install -y wget apt-transport-https gnupg lsb-release
+          wget -qO - https://aquasecurity.github.io/trivy-repo/deb/public.key | sudo apt-key add -
+          echo deb https://aquasecurity.github.io/trivy-repo/deb $(lsb_release -sc) main | sudo tee /etc/apt/sources.list.d/trivy.list
+          sudo apt-get update
+          sudo apt-get install -y trivy
 
-      - name: Lint Dockerfile
-        run: hadolint Dockerfile
-
+      - name: Scan Dockerfile with Trivy
+        run: trivy config --exit-code 1 --severity HIGH,CRITICAL .
